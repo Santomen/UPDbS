@@ -459,6 +459,7 @@ fun enter_application(valido:Boolean,navController: NavHostController){
 
 @Composable
 fun Watched(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
+    val (valueP, setValueP) = remember { mutableStateOf("") }
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
