@@ -17,8 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.twotone.Star
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
@@ -29,7 +31,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.FontWeight.Companion.Black
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -37,11 +38,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import java.sql.Types.NULL
+import com.example.projectgui1.ui.theme.*
 
 
 val DarkYellow = Color(0xFFF5C518)
@@ -61,6 +63,7 @@ fun NavigationComponent(){
     //Navcontroler, controla el estado de la navegacion de nuestra aplicacion y recuerda en que pantalla estamos
     //navHost trabaja en conjunto con el de arriba y nos dice cual es la pag principal y nos permite de claara las rutas en la app
     val navController= rememberNavController()
+    val pseudoUsuarioViewModel: pseudoViewModel = viewModel()
     NavHost(navController = navController, startDestination = "bienvenida"){
         //aqui se declaran las rutas
         //esto de abajo es para la destination route
@@ -69,22 +72,22 @@ fun NavigationComponent(){
         }
         //otra ruta
         composable("signup"){
-            SignUp(navController = navController)
+            SignUp(navController = navController,pseudoUsuarioViewModel)
         }
         composable("login"){
-            LogIn(navController = navController)
+            LogIn(navController = navController,pseudoUsuarioViewModel)
         }
         composable("sidebar"){
             Sidebar(navController = navController)
         }
         composable("watched"){
-            Watched(navController = navController)
+            Watched(navController = navController,pseudoUsuarioViewModel)
         }
         composable("wachlist"){
-            Watchlist(navController = navController)
+            Watchlist(navController = navController,pseudoUsuarioViewModel)
         }
         composable("feedback"){
-            FeedBack(navController = navController)
+            FeedBack(navController = navController,pseudoUsuarioViewModel)
         }
         composable("top"){
             Top(navController = navController)
@@ -97,6 +100,75 @@ fun NavigationComponent(){
         }
     }
 }
+@Composable
+fun Sidebar(navController: NavHostController) {
+    Column (
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(350.dp)
+            .background(color = DarkYellow)
+    ) {
+        Row (modifier = Modifier.width(350.dp)) {
+            Text(text = "UPDb",
+                fontSize = 50.sp,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.padding(top = 30.dp, start = 30.dp),
+            )
+            IconButton(onClick = { /*TODO*/ }, modifier = Modifier.size(155.dp)
+                .padding(start = 130.dp, top = 45.dp)) {
+                Icon(
+                    Icons.Filled.Menu,contentDescription = "sideBarIcon", modifier = Modifier.size(50.dp)
+                )
+            }
+            /*Image(
+                painter = painterResource(R.drawable.hamburguer_menu),
+                contentDescription = "sideBarIcon",
+                modifier = Modifier
+                    .size(155.dp)
+                    .padding(start = 130.dp, top = 45.dp)
+                ,
+                alignment = Alignment.TopEnd
+            )*/
+        }
+        SidebarSection(textToRender = "Noticias", imgName = R.drawable.news_icon,navController,"news")
+        SidebarSection(textToRender = "Top películas", imgName = R.drawable.top_icon,navController,"top")
+        SidebarSection(textToRender = "Recomendaciones", imgName = R.drawable.recom_icon,navController,"recomendaciones")
+        SidebarSection(textToRender = "Watched", imgName = R.drawable.watched_icon,navController,"watched")
+        SidebarSection(textToRender = "WatchList", imgName = R.drawable.watchlist_icon,navController,"wachlist")
+        SidebarSection(textToRender = "Feedback", imgName = R.drawable.feedback_icon,navController,"feedback")
+
+        Button(onClick = { navController.navigate("bienvenida") },
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
+            modifier = Modifier
+                .padding(top = 65.dp)
+                .size(width = 200.dp, height = 55.dp)
+                .align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(corner = CornerSize(10.dp)),
+        ) {
+            Text(text = "Cerrar sesión", color = DarkYellow, fontSize = 20.sp)
+        }
+    }
+}
+
+@Composable
+fun SidebarSection(textToRender: String, imgName: Int,navController: NavHostController,ruta:String) {
+    Row (modifier = Modifier.height(60.dp)) {
+        Image(
+            painter = painterResource(imgName),
+            contentDescription = "profilePic",
+            modifier = Modifier
+                .size(60.dp)
+                .padding(start = 40.dp)
+        )
+        TextButton(onClick = { navController.navigate(ruta) }) {
+            Text(text = textToRender, fontSize = 20.sp, modifier = Modifier.padding(top = 14.dp, start = 40.dp), color = Color.Black)
+        }
+
+    }
+    Divider(modifier = Modifier.padding(top = 1.dp), thickness = 2.dp)
+}
+
+
 /////////////////////////////////////////////////////////MIGUEL
 @Composable
 fun Bienvenida(navController: NavHostController) {
@@ -141,7 +213,7 @@ fun Bienvenida(navController: NavHostController) {
 }
 
 @Composable
-fun SignUp(navController: NavHostController) {
+fun SignUp(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirm_password by remember { mutableStateOf("") }
@@ -238,8 +310,9 @@ fun SignUp(navController: NavHostController) {
                 }
             )
         }
-        var n=false
-        Button(onClick = { navController.navigate("sidebar") },
+        //Validacion del usuario
+        Button(
+            onClick = { enter_application(pseudoUsuarioViewModel.add(email,password,confirm_password),navController = navController) },
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
             modifier = Modifier
                 .padding(top = 100.dp)
@@ -274,7 +347,7 @@ fun SignUp(navController: NavHostController) {
 }
 
 @Composable
-fun LogIn(navController: NavHostController) {
+fun LogIn(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var hidden by remember { mutableStateOf(true) }
@@ -341,7 +414,8 @@ fun LogIn(navController: NavHostController) {
             )
             Text(text = "¿Olvidaste tu constraseña?", color = Color.White, modifier = Modifier.padding(start = 85.dp))
         }
-        Button(onClick = { navController.navigate("sidebar") },
+        //validar usuario
+        Button(onClick = { enter_application(pseudoUsuarioViewModel.verificar(email,password),navController = navController) },
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
             modifier = Modifier
                 .padding(top = 130.dp)
@@ -376,137 +450,15 @@ fun LogIn(navController: NavHostController) {
     }
 }
 
-@Composable
-fun Sidebar(navController: NavHostController) {
-    Column (
-        modifier = Modifier
-            .fillMaxHeight()
-            .width(350.dp)
-            .background(color = DarkYellow)
-    ) {
-        Row (modifier = Modifier.width(350.dp)) {
-            Text(text = "UPDb",
-                fontSize = 50.sp,
-                fontFamily = FontFamily.Monospace,
-                modifier = Modifier.padding(top = 30.dp, start = 30.dp),
-            )
-            IconButton(onClick = { /*TODO*/ }, modifier = Modifier.size(155.dp)
-                .padding(start = 130.dp, top = 45.dp)) {
-                Icon(
-                    Icons.Filled.Menu,contentDescription = "sideBarIcon", modifier = Modifier.size(50.dp)
-                )
-            }
-            /*Image(
-                painter = painterResource(R.drawable.hamburguer_menu),
-                contentDescription = "sideBarIcon",
-                modifier = Modifier
-                    .size(155.dp)
-                    .padding(start = 130.dp, top = 45.dp)
-                ,
-                alignment = Alignment.TopEnd
-            )*/
-        }
-        SidebarSection(textToRender = "Noticias", imgName = R.drawable.news_icon,navController,"news")
-        SidebarSection(textToRender = "Top películas", imgName = R.drawable.top_icon,navController,"top")
-        SidebarSection(textToRender = "Recomendaciones", imgName = R.drawable.recom_icon,navController,"recomendaciones")
-        SidebarSection(textToRender = "Watched", imgName = R.drawable.watched_icon,navController,"watched")
-        SidebarSection(textToRender = "WatchList", imgName = R.drawable.watchlist_icon,navController,"wachlist")
-        SidebarSection(textToRender = "Feedback", imgName = R.drawable.feedback_icon,navController,"feedback")
 
-        Button(onClick = { navController.navigate("bienvenida") },
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
-            modifier = Modifier
-                .padding(top = 65.dp)
-                .size(width = 200.dp, height = 55.dp)
-                .align(Alignment.CenterHorizontally),
-            shape = RoundedCornerShape(corner = CornerSize(10.dp)),
-        ) {
-            Text(text = "Cerrar sesión", color = DarkYellow, fontSize = 20.sp)
-        }
-    }
+fun enter_application(valido:Boolean,navController: NavHostController){
+    if(valido)
+        navController.navigate("sidebar")
+
 }
 
 @Composable
-fun SidebarSection(textToRender: String, imgName: Int,navController: NavHostController,ruta:String) {
-    Row (modifier = Modifier.height(60.dp)) {
-        Image(
-            painter = painterResource(imgName),
-            contentDescription = "profilePic",
-            modifier = Modifier
-                .size(60.dp)
-                .padding(start = 40.dp)
-        )
-        TextButton(onClick = { navController.navigate(ruta) }) {
-            Text(text = textToRender, fontSize = 20.sp, modifier = Modifier.padding(top = 14.dp, start = 40.dp), color = Color.Black)
-        }
-
-    }
-    Divider(modifier = Modifier.padding(top = 1.dp), thickness = 2.dp)
-}
-
-//Santiago
-data class Peliculas(val titulo:String, val year:Int, val imageId:Int=0)
-data class Series(val titulo:String,val year:Int,val imageId:Int=0)
-val lPeliculas= arrayListOf(Peliculas("Birds of Prey",2020,R.drawable.peli1))
-val lSeries= arrayListOf(Series("No time to die",2021,R.drawable.serie1))
-fun agregar_peliculas(){
-    lPeliculas.add(Peliculas("Now You see me 2",2016,R.drawable.peli2))
-    lPeliculas.add(Peliculas("Onward",2020,R.drawable.peli3))
-    lPeliculas.add(Peliculas("Mulan",2020,R.drawable.peli4))
-
-}
-@Composable
-fun DropDownMenu() {
-
-    var expanded by remember { mutableStateOf(false) }
-    val suggestions = listOf("Series", "Peliculas")
-    var selectedText by remember { mutableStateOf("") }
-
-    var textfieldSize by remember { mutableStateOf(Size.Zero) }
-
-    val icon = if (expanded)
-        Icons.Filled.KeyboardArrowUp
-    else
-        Icons.Filled.KeyboardArrowDown
-
-
-    Column(Modifier.padding(20.dp)) {
-        OutlinedTextField(
-            value = selectedText,
-            onValueChange = { selectedText = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onGloballyPositioned { coordinates ->
-                    //This value is used to assign to the DropDown the same width
-                    textfieldSize = coordinates.size.toSize()
-                },
-            label = {Text("Seleccion el tipo de contenido")},
-            trailingIcon = {
-                Icon(icon,"contentDescription",
-                    Modifier.clickable { expanded = !expanded })
-            }
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .width(with(LocalDensity.current){textfieldSize.width.toDp()})
-        ) {
-            suggestions.forEach { label ->
-                DropdownMenuItem(onClick = {
-                    selectedText = label
-                    expanded = false
-                }) {
-                    Text(text = label)
-                }
-            }
-        }
-    }
-
-}
-@Composable
-fun Watched(navController: NavHostController) {
-    agregar_peliculas()
+fun Watched(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
@@ -514,11 +466,10 @@ fun Watched(navController: NavHostController) {
                 .size(50.dp)
         )
     }
-
     Column( horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight()){
+            .fillMaxHeight()) {
         Image(
             painter = painterResource(R.drawable.ojo),
             contentDescription = "Wachlist",
@@ -534,11 +485,15 @@ fun Watched(navController: NavHostController) {
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 25.dp)
         )
         //Drop down button
+        var mostrar by remember { mutableStateOf("") }
         Row {
-            DropDownMenu()
+            val opciones = listOf("Series", "Peliculas")
+
+            mostrar = DropDownMenu(opciones)
         }
         Row {
-            Button(onClick = { /*TODO*/ },
+            Button(
+                onClick = { /*TODO*/ },
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
                 modifier = Modifier
                     .padding(top = 20.dp)
@@ -547,22 +502,32 @@ fun Watched(navController: NavHostController) {
             ) {
                 Text(text = "Agregar", color = Color.White, fontSize = 16.sp)
             }
-            val text by remember{ mutableStateOf("") }
-            TextField(value =text , onValueChange = {}, modifier = Modifier
-                .padding(20.dp)
-                .size(width = 200.dp, height = 55.dp))
+            val text by remember { mutableStateOf("") }
+            TextField(
+                value = text, onValueChange = {}, modifier = Modifier
+                    .padding(20.dp)
+                    .size(width = 200.dp, height = 55.dp)
+            )
         }
-        Listado_contenido()
-
+        val contenidoViewModel: ContenidoViewModel = viewModel()
+        val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
+        val lSeries = contenidoViewModel.emisorSeries.observeAsState()
+        if (mostrar == "Peliculas") {
+            contenidoViewModel.agregar_peliculas()
+            lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
+                Listado_contenido_pelis(this)
+            }
+        } else if (mostrar == "Series") {
+            contenidoViewModel.agregar_series()
+            lSeries.value?.run{
+                Listado_contenido_series(this)
+            }
+        }
     }
 }
 
-
-/////////////////////////////////////////////////////////SANTIAGO wachlist
-
 @Composable
-fun Watchlist(navController: NavHostController) {
-    agregar_peliculas()
+fun Watchlist(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
@@ -570,6 +535,9 @@ fun Watchlist(navController: NavHostController) {
                 .size(50.dp)
         )
     }
+    val contenidoViewModel:ContenidoViewModel=viewModel()
+    val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
+    val lSeries = contenidoViewModel.emisorSeries.observeAsState()
     Column( horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
@@ -588,83 +556,34 @@ fun Watchlist(navController: NavHostController) {
             fontSize = 30.sp,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 25.dp)
         )
-
-        Listado_contenido()
+        contenidoViewModel.agregar_peliculas()
+        contenidoViewModel.agregar_series()
+        lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
+            Listado_contenido_pelis(this)
+        }
+        lSeries.value?.run{
+            Listado_contenido_series(this)
+        }
 
     }
 
 }
 
-
 @Composable
-fun Listado_contenido(){
-
-    LazyColumn {
-        items(lPeliculas){
-                Peli->Componente_visual(Peli)
+fun FeedBack(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
+    val N = pseudoUsuarioViewModel.emisorEstrellas.observeAsState()
+    val (valueN, setValueN) = remember { mutableStateOf(0) }
+    val (valueDescription, setValueDescription) = remember { mutableStateOf("Comments") }
+    var ban by remember { mutableStateOf(false) }
+    if(ban==false){
+        N.value?.run{
+            setValueN(this)
         }
-        items(lSeries){
-                Series->
-            Componente_visualSeries(Series)
-        }
+        ban=true
     }
-}
-@Composable
-fun Componente_visual(peli:Peliculas){
-    Card(
-        shape = MaterialTheme.shapes.small,
-        modifier = Modifier
-            .padding(
-                bottom = 6.dp,
-                top = 6.dp,
-            )
-            .fillMaxWidth(0.5F),
-        elevation = 8.dp,
-    ) {
 
-        Column {
-            Image(
-                painter = painterResource(peli.imageId),
-                contentDescription = "Wachlist",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.05F),
-                contentScale = ContentScale.Crop,
-            )
-
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp)
-            ){
-                Text(
-                    text = peli.titulo,
-                    modifier = Modifier
-                        .fillMaxWidth(0.5F)
-                        .wrapContentWidth(Alignment.Start)
-                    ,
-                    style = MaterialTheme.typography.h5
-                )
-                val rank =peli.year.toString()
-                Text(
-                    text = "Año $rank",
-                    modifier = Modifier
-                        .fillMaxWidth(1F)
-                        .wrapContentWidth(Alignment.End)
-                    ,
-                    style = MaterialTheme.typography.h6
-                )
-
-            }
-        }
-    }
-}
-
-/////Feedback
-@Composable
-fun FeedBack(navController: NavHostController) {
     IconButton(onClick = { navController.navigate("sidebar") }
+
     ) {
         Icon(
             Icons.Filled.Menu,contentDescription = "sideBarIcon", modifier = Modifier
@@ -692,9 +611,9 @@ fun FeedBack(navController: NavHostController) {
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 75.dp)
         )
         //Image(painter = painterResource(id = comments  ) , contentDescription ="comments" )
-        Row_stars()
-        TextAreaExample()
-        Button(onClick = { /*TODO*/ },
+        Row_stars(valueN, setValueN,N)
+        textarea(valueDescription,setValueDescription)
+        Button(onClick = { pseudoUsuarioViewModel.feed(valueDescription,valueN) },
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
             modifier = Modifier
                 .padding(top = 85.dp)
@@ -706,63 +625,20 @@ fun FeedBack(navController: NavHostController) {
     }
 
 }
-
 @Composable
-fun TextAreaExample() {
-    var description by remember { mutableStateOf("Comments") }
-
+fun textarea(description: String, setValueDescription: (String) -> Unit) {
     TextField(
         value = description,
-        onValueChange = { description = it },
+        onValueChange = { setValueDescription(it)},
         modifier = Modifier
             .padding(top = 85.dp)
             .fillMaxWidth(.7F)
             .fillMaxHeight(0.5F), shape = RoundedCornerShape(corner = CornerSize(30.dp))
     )
-}
-@Composable
-fun Row_stars(){
-    Row(modifier=Modifier.padding(top=40.dp)){
-        for(x in 1 until 6){
-            Star_buttons()
-        }
-    }
-}
-@Composable
-fun Star_buttons(){
-    IconButton(onClick = {
-
-    }) {
-        Icon(imageVector = Icons.TwoTone.Star,contentDescription = null, modifier = Modifier.size(100.dp))
-    }
-}
-/////////////////////////////////////////////////////////PILAR
-data class Noticias(val titulo:String,val noticia:String,val imageId:Int=0)
-val lNoticias = arrayListOf(Noticias("Get ready for a fun", "Cody Fisher", R.drawable.nuno))
-fun agregar_recomendacionesSeires(){
-    lSeries.add(Series("Star Trek", 1922, R.drawable.startrek))
-}
-fun agregar_noticias(){
-    lNoticias.add( Noticias("When is the right time to watch series?",
-        "Wade Warren",
-        R.drawable.ndos))
-    lNoticias.add( Noticias("Edible plants",
-        "Theresa Webb",
-        R.drawable.ncuatro))
-    lNoticias.add( Noticias("Look for these places when you don't have a tent",
-        "Marvin McKinney",
-        R.drawable.ntres))
-    lNoticias.add( Noticias("These animals are easy to obtain and consume",
-        "Guy Hawkins",
-        R.drawable.ncinco))
-    lNoticias.add( Noticias("Make a SOS signal from the goods around us",
-        "Wade Warren",
-        R.drawable.nseis))
 
 }
 @Composable
 fun Recomendaciones(navController: NavHostController) {
-    agregar_peliculas()
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
@@ -770,6 +646,9 @@ fun Recomendaciones(navController: NavHostController) {
                 .size(50.dp)
         )
     }
+    val contenidoViewModel:ContenidoViewModel=viewModel()
+    val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
+    val lSeries = contenidoViewModel.emisorSeries.observeAsState()
     Column( horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
@@ -789,15 +668,19 @@ fun Recomendaciones(navController: NavHostController) {
             fontSize = 30.sp,
             modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 15.dp)
         )
-        Listado_contenido()
-
+        contenidoViewModel.agregar_peliculas()
+        contenidoViewModel.agregar_series()
+        lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
+            Listado_contenido_pelis(this)
+        }
+        lSeries.value?.run{
+            Listado_contenido_series(this)
+        }
     }
 
 }
-//----------------------------------------
 @Composable
 fun Top(navController: NavHostController) {
-    agregar_peliculas()
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
@@ -805,6 +688,9 @@ fun Top(navController: NavHostController) {
                 .size(50.dp)
         )
     }
+    val contenidoViewModel:ContenidoViewModel=viewModel()
+    val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
+    val lSeries = contenidoViewModel.emisorSeries.observeAsState()
     /* Image(painter = painterResource(R.drawable.hamburguer_menu),
          contentDescription = "hamburger_menu",
          modifier = Modifier
@@ -828,15 +714,27 @@ fun Top(navController: NavHostController) {
             fontSize = 30.sp,
             modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 15.dp)
         )
-        DropDownMenu()
-        Listado_contenido()
+        val opciones= listOf<String>("Series","Peliculas")
+        var mostrar by remember { mutableStateOf("") }
+        mostrar=DropDownMenu(opciones)
+        if (mostrar == "Peliculas") {
+            contenidoViewModel.agregar_peliculas()
+            lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
+                Listado_contenido_pelis(this)
+            }
+        } else if (mostrar == "Series") {
+            contenidoViewModel.agregar_series()
+            lSeries.value?.run{
+                Listado_contenido_series(this)
+            }
+        }
 
     }
 
 }
+
 @Composable
 fun News(navController: NavHostController) {
-    agregar_noticias()
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
@@ -844,7 +742,6 @@ fun News(navController: NavHostController) {
                 .size(50.dp)
         )
     }
-
     Column( horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
@@ -863,18 +760,65 @@ fun News(navController: NavHostController) {
             fontSize = 40.sp,
             modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 15.dp)
         )
-        Lista_de_noticias()
-
+        val contenidoViewModel:ContenidoViewModel=viewModel()
+        val lNoticias=contenidoViewModel.emisorNoticias.observeAsState()
+        contenidoViewModel.agregar_noticias()
+        lNoticias.value?.run{ //Si el valor de usuariosState value no es nulo ejecutalo
+            Lista_de_noticias(this)
+        }
     }
 
 }
 //-----------------------------------------------
+//Componentes
 @Composable
-fun Lista_de_noticias(){
+fun Componente_visualSeries(serie:Series){
+    Card(
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier
+            .padding(
+                bottom = 6.dp,
+                top = 6.dp,
+            )
+            .fillMaxWidth(0.5F),
+        elevation = 8.dp,
+    ) {
 
-    LazyColumn {
-        items(lNoticias){
-                nota->Componente_visual_noticias(nota)
+        Column {
+            Image(
+                painter = painterResource(serie.imageId),
+                contentDescription = "Recomendaciones",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.05F),
+                contentScale = ContentScale.Crop,
+            )
+
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp)
+            ){
+                Text(
+                    text = serie.titulo,
+                    modifier = Modifier
+                        .fillMaxWidth(0.5F)
+                        .wrapContentWidth(Alignment.Start)
+                    ,
+                    style = MaterialTheme.typography.h5
+                )
+                val rank =serie.year.toString()
+                Text(
+                    text = "Año $rank",
+                    modifier = Modifier
+                        .fillMaxWidth(1F)
+                        .wrapContentWidth(Alignment.End)
+                    ,
+                    style = MaterialTheme.typography.h6
+                )
+
+            }
         }
     }
 }
@@ -927,7 +871,59 @@ fun Componente_visual_noticias(nota:Noticias){
     }
 }
 @Composable
-fun Componente_visualSeries(serie:Series){
+fun Lista_de_noticias(noticias: List<Noticias>) {
+    LazyColumn {
+        items(noticias){
+                nota->Componente_visual_noticias(nota)
+        }
+    }
+}
+
+@Composable
+fun Row_stars(valueN: Int, setValueN: (Int) -> Unit, N: State<Int?>) {
+
+    Row(modifier=Modifier.padding(top=40.dp)){
+        for(x in 1 until 6){
+            var i=false
+            if(x<=valueN)
+                i=true
+            Star_buttons(x,setValueN,i,N)
+        }
+    }
+}
+@Composable
+fun Star_buttons(x: Int, setValueN: (Int) -> Unit, i: Boolean, N: State<Int?>) {
+    IconButton(onClick = {
+        setValueN(x)
+    }) {
+        if(i==true)
+           Icon(imageVector = Icons.Filled.Star,contentDescription = null, modifier = Modifier.size(100.dp))
+        else
+            Icon(imageVector = Icons.TwoTone.Star,contentDescription = null, modifier = Modifier.size(100.dp))
+    }
+
+}
+@Composable
+fun Listado_contenido_pelis(list: List<Peliculas>) {
+
+    LazyColumn {
+        items(list){
+                Peli->Componente_visualPeliculas(Peli)
+        }
+    }
+
+}
+@Composable
+fun Listado_contenido_series(list: List<Series>) {
+    LazyColumn {
+        items(list){
+                Series->
+            Componente_visualSeries(Series)
+        }
+    }
+}
+@Composable
+fun Componente_visualPeliculas(peli:Peliculas){
     Card(
         shape = MaterialTheme.shapes.small,
         modifier = Modifier
@@ -941,8 +937,8 @@ fun Componente_visualSeries(serie:Series){
 
         Column {
             Image(
-                painter = painterResource(serie.imageId),
-                contentDescription = "Recomendaciones",
+                painter = painterResource(peli.imageId),
+                contentDescription = "Wachlist",
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.05F),
@@ -956,14 +952,14 @@ fun Componente_visualSeries(serie:Series){
                     .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp)
             ){
                 Text(
-                    text = serie.titulo,
+                    text = peli.titulo,
                     modifier = Modifier
                         .fillMaxWidth(0.5F)
                         .wrapContentWidth(Alignment.Start)
                     ,
                     style = MaterialTheme.typography.h5
                 )
-                val rank =serie.year.toString()
+                val rank =peli.year.toString()
                 Text(
                     text = "Año $rank",
                     modifier = Modifier
@@ -976,4 +972,53 @@ fun Componente_visualSeries(serie:Series){
             }
         }
     }
+}
+@Composable
+fun DropDownMenu(opciones: List<String>):String {
+
+    var expanded by remember { mutableStateOf(false) }
+    val suggestions = opciones
+    var selectedText by remember { mutableStateOf("") }
+
+    var textfieldSize by remember { mutableStateOf(Size.Zero) }
+
+    val icon = if (expanded)
+        Icons.Filled.KeyboardArrowUp
+    else
+        Icons.Filled.KeyboardArrowDown
+
+
+    Column(Modifier.padding(20.dp)) {
+        OutlinedTextField(
+            value = selectedText,
+            onValueChange = { selectedText = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates ->
+                    //This value is used to assign to the DropDown the same width
+                    textfieldSize = coordinates.size.toSize()
+                },
+            label = {Text("Seleccion el tipo de contenido")},
+            trailingIcon = {
+                Icon(icon,"contentDescription",
+                    Modifier.clickable { expanded = !expanded })
+            }
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .width(with(LocalDensity.current){textfieldSize.width.toDp()})
+        ) {
+            suggestions.forEach { label ->
+                DropdownMenuItem(onClick = {
+                    selectedText = label
+                    expanded = false
+                }) {
+                    Text(text = label)
+                }
+            }
+        }
+    }
+    return selectedText
 }
