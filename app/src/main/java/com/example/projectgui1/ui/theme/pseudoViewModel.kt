@@ -1,7 +1,15 @@
 package com.example.projectgui1.ui.theme
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.projectgui1.APIService
+import com.example.projectgui1.Noticias
+import com.example.projectgui1.Peliculas
 import com.example.projectgui1.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class pseudoViewModel:ViewModel() {
     val emisorEstrellas = MutableLiveData<Int>()
@@ -26,43 +34,124 @@ class pseudoViewModel:ViewModel() {
     }
 }
 
-data class Peliculas(val titulo:String, val year:Int, val imageId:Int=0)
-data class Series(val titulo:String,val year:Int,val imageId:Int=0)
-data class Noticias(val titulo:String,val noticia:String,val imageId:Int=0)
+
+
 class   ContenidoViewModel:ViewModel(){
     val emisorPeliculas = MutableLiveData<List<Peliculas>>()
     val emisorSeries = MutableLiveData<List<Series>>()
     val emisorNoticias = MutableLiveData<List<Noticias>>()
-    val lPeliculas= arrayListOf(Peliculas("Birds of Prey",2020,R.drawable.peli1))
-    val lSeries= arrayListOf(Series("No time to die",2021,R.drawable.serie1))
-    val lNoticias = arrayListOf(Noticias("Get ready for a fun", "Cody Fisher", R.drawable.nuno))
-    fun agregar_peliculas(){
-        lPeliculas.add(Peliculas("Now You see me 2",2016,R.drawable.peli2))
-        lPeliculas.add(Peliculas("Onward",2020,R.drawable.peli3))
-        lPeliculas.add(Peliculas("Mulan",2020,R.drawable.peli4))
-        emisorPeliculas.postValue(lPeliculas)
+    val lPeliculas= arrayListOf(Peliculas("Birds of Prey",2020,"https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
+    val lSeries= arrayListOf(Series("No time to die",2021,"https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
+    val lNoticias = arrayListOf(Noticias("Get ready for a fun", "Cody Fisher", "https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
+    //Retrodit instance
+    fun getRetrofit(): Retrofit {
+        return Retrofit.Builder().baseUrl("http://192.168.1.124:8080").addConverterFactory(
+            GsonConverterFactory.create()).build()
     }
-    fun agregar_series(){
-        lSeries.add(Series("Star Trek", 1922, R.drawable.startrek))
-        emisorSeries.postValue(lSeries)
+
+    //la funcion agregar peliculas se encargara de traer del back
+    fun agregar_peliculas_w(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val call= getRetrofit().create(APIService::class.java).getWatchedP()
+            val pelis=call.body()
+            if(call.isSuccessful){
+                //val images = puppies ?: emptyList()
+                emisorPeliculas.postValue(pelis)
+            }
+            else{
+                print("No funciona")
+            }
+        }
+
+    }
+    fun agregar_series_w(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val call= getRetrofit().create(APIService::class.java).getWatchedS()
+            val series=call.body()
+            if(call.isSuccessful){
+                //val images = puppies ?: emptyList()
+                emisorSeries.postValue(series)
+            }
+            else{
+                print("No funciona")
+            }
+        }
+
+    }
+    fun agregar_peliculas_s(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val call= getRetrofit().create(APIService::class.java).getWachlistP()
+            val pelis=call.body()
+            if(call.isSuccessful){
+                //val images = puppies ?: emptyList()
+                emisorPeliculas.postValue(pelis)
+            }
+            else{
+                print("No funciona")
+            }
+        }
+
+    }
+    fun agregar_series_s(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val call= getRetrofit().create(APIService::class.java).getWachlistS()
+            val series=call.body()
+            if(call.isSuccessful){
+                //val images = puppies ?: emptyList()
+                emisorSeries.postValue(series)
+            }
+            else{
+                print("No funciona")
+            }
+        }
+
+    }
+    fun agregar_series_top(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val call= getRetrofit().create(APIService::class.java).getTopS()
+            val series=call.body()
+            if(call.isSuccessful){
+                //val images = puppies ?: emptyList()
+                emisorSeries.postValue(series)
+            }
+            else{
+                print("No funciona")
+            }
+        }
+
+    }
+    fun agregar_peliculas_top(){
+        CoroutineScope(Dispatchers.IO).launch {
+            val call= getRetrofit().create(APIService::class.java).getTopP()
+            val series=call.body()
+            if(call.isSuccessful){
+                //val images = puppies ?: emptyList()
+                emisorPeliculas.postValue(series)
+            }
+            else{
+                print("No funciona")
+            }
+        }
+
     }
     fun agregar_noticias(){
         lNoticias.add( Noticias("When is the right time to watch series?",
             "Wade Warren",
-            R.drawable.ndos))
+            "https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
         lNoticias.add( Noticias("Edible plants",
             "Theresa Webb",
-            R.drawable.ncuatro))
+            "https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
         lNoticias.add( Noticias("Look for these places when you don't have a tent",
             "Marvin McKinney",
-            R.drawable.ntres))
+            "https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
         lNoticias.add( Noticias("These animals are easy to obtain and consume",
             "Guy Hawkins",
-            R.drawable.ncinco))
+            "https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
         lNoticias.add( Noticias("Make a SOS signal from the goods around us",
             "Wade Warren",
-            R.drawable.nseis))
+            "https://lumiere-a.akamaihd.net/v1/images/image_4f447b1d.jpeg?region=0%2C0%2C540%2C810"))
         emisorNoticias.postValue(lNoticias)
     }
 
 }
+

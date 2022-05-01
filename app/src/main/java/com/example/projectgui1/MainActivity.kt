@@ -1,5 +1,6 @@
 package com.example.projectgui1
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -25,7 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -44,6 +46,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.projectgui1.ui.theme.*
+import kotlinx.coroutines.*
+import java.net.MalformedURLException
+import java.net.URL
 
 
 val DarkYellow = Color(0xFFF5C518)
@@ -514,12 +519,12 @@ fun Watched(navController: NavHostController, pseudoUsuarioViewModel: pseudoView
         val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
         val lSeries = contenidoViewModel.emisorSeries.observeAsState()
         if (mostrar == "Peliculas") {
-            contenidoViewModel.agregar_peliculas()
+            contenidoViewModel.agregar_peliculas_w()
             lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
                 Listado_contenido_pelis(this)
             }
         } else if (mostrar == "Series") {
-            contenidoViewModel.agregar_series()
+            contenidoViewModel.agregar_series_w()
             lSeries.value?.run{
                 Listado_contenido_series(this)
             }
@@ -529,6 +534,7 @@ fun Watched(navController: NavHostController, pseudoUsuarioViewModel: pseudoView
 
 @Composable
 fun Watchlist(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
+    val (valueP, setValueP) = remember { mutableStateOf("") }
     IconButton(onClick = { navController.navigate("sidebar") }
     ) {
         Icon(
@@ -536,13 +542,10 @@ fun Watchlist(navController: NavHostController, pseudoUsuarioViewModel: pseudoVi
                 .size(50.dp)
         )
     }
-    val contenidoViewModel:ContenidoViewModel=viewModel()
-    val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
-    val lSeries = contenidoViewModel.emisorSeries.observeAsState()
     Column( horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight()){
+            .fillMaxHeight()) {
         Image(
             painter = painterResource(R.drawable.wachlist),
             contentDescription = "Wachlist",
@@ -552,24 +555,52 @@ fun Watchlist(navController: NavHostController, pseudoUsuarioViewModel: pseudoVi
             alignment = Alignment.Center
         )
         Text(
-            text = "Wachlist",
+            text = "Wactched",
             textAlign = TextAlign.Center,
             fontSize = 30.sp,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 25.dp)
         )
-        contenidoViewModel.agregar_peliculas()
-        contenidoViewModel.agregar_series()
-        lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
-            Listado_contenido_pelis(this)
-        }
-        lSeries.value?.run{
-            Listado_contenido_series(this)
-        }
+        //Drop down button
+        var mostrar by remember { mutableStateOf("") }
+        Row {
+            val opciones = listOf("Series", "Peliculas")
 
+            mostrar = DropDownMenu(opciones)
+        }
+        Row {
+            Button(
+                onClick = { /*TODO*/ },
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
+                modifier = Modifier
+                    .padding(top = 20.dp)
+                    .size(width = 120.dp, height = 55.dp),
+                shape = RoundedCornerShape(corner = CornerSize(10.dp)),
+            ) {
+                Text(text = "Agregar", color = Color.White, fontSize = 16.sp)
+            }
+            val text by remember { mutableStateOf("") }
+            TextField(
+                value = text, onValueChange = {}, modifier = Modifier
+                    .padding(20.dp)
+                    .size(width = 200.dp, height = 55.dp)
+            )
+        }
+        val contenidoViewModel: ContenidoViewModel = viewModel()
+        val lPeliculas = contenidoViewModel.emisorPeliculas.observeAsState()
+        val lSeries = contenidoViewModel.emisorSeries.observeAsState()
+        if (mostrar == "Peliculas") {
+            contenidoViewModel.agregar_peliculas_s()
+            lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
+                Listado_contenido_pelis(this)
+            }
+        } else if (mostrar == "Series") {
+            contenidoViewModel.agregar_series_s()
+            lSeries.value?.run{
+                Listado_contenido_series(this)
+            }
+        }
     }
-
 }
-
 @Composable
 fun FeedBack(navController: NavHostController, pseudoUsuarioViewModel: pseudoViewModel) {
     val N = pseudoUsuarioViewModel.emisorEstrellas.observeAsState()
@@ -669,8 +700,8 @@ fun Recomendaciones(navController: NavHostController) {
             fontSize = 30.sp,
             modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 15.dp)
         )
-        contenidoViewModel.agregar_peliculas()
-        contenidoViewModel.agregar_series()
+        contenidoViewModel.agregar_peliculas_w()
+        contenidoViewModel.agregar_series_w()
         lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
             Listado_contenido_pelis(this)
         }
@@ -719,12 +750,12 @@ fun Top(navController: NavHostController) {
         var mostrar by remember { mutableStateOf("") }
         mostrar=DropDownMenu(opciones)
         if (mostrar == "Peliculas") {
-            contenidoViewModel.agregar_peliculas()
+            contenidoViewModel.agregar_peliculas_top()
             lPeliculas.value?.run { //Si el valor de usuariosState value no es nulo ejecutalo
                 Listado_contenido_pelis(this)
             }
         } else if (mostrar == "Series") {
-            contenidoViewModel.agregar_series()
+            contenidoViewModel.agregar_series_top()
             lSeries.value?.run{
                 Listado_contenido_series(this)
             }
@@ -774,6 +805,12 @@ fun News(navController: NavHostController) {
 //Componentes
 @Composable
 fun Componente_visualSeries(serie:Series){
+    val bitmap=remember{mutableStateOf<ImageBitmap?>(null)}
+    val scope= rememberCoroutineScope()
+    val url=try{
+        URL(serie.imageId)
+    }catch(e: MalformedURLException){null}
+    url?.loadImage(scope,bitmap)
     Card(
         shape = MaterialTheme.shapes.small,
         modifier = Modifier
@@ -786,14 +823,11 @@ fun Componente_visualSeries(serie:Series){
     ) {
 
         Column {
-            Image(
-                painter = painterResource(serie.imageId),
-                contentDescription = "Recomendaciones",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.05F),
-                contentScale = ContentScale.Crop,
-            )
+            bitmap.value?.apply{
+                Image(
+                    bitmap=this, contentDescription = "Recomendaciones"
+                )
+            }
 
 
             Row(
@@ -824,7 +858,13 @@ fun Componente_visualSeries(serie:Series){
     }
 }
 @Composable
-fun Componente_visual_noticias(nota:Noticias){
+fun Componente_visual_noticias(nota: Noticias){
+    val bitmap=remember{mutableStateOf<ImageBitmap?>(null)}
+    val scope= rememberCoroutineScope()
+    val url=try{
+        URL(nota.imageId)
+    }catch(e: MalformedURLException){null}
+    url?.loadImage(scope,bitmap)
     Card(
         shape = MaterialTheme.shapes.small,
         modifier = Modifier
@@ -842,14 +882,11 @@ fun Componente_visual_noticias(nota:Noticias){
                 .fillMaxWidth()
                 .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp)
         ){
-            Image(
-                painter = painterResource(nota.imageId),
-                contentDescription = "Recomendaciones",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.05F),
-                contentScale = ContentScale.Crop,
-            )
+            bitmap.value?.apply{
+                Image(
+                    bitmap=this, contentDescription = "Wachlist"
+                )
+            }
             Text(
                 text = nota.titulo,
                 modifier = Modifier
@@ -924,7 +961,13 @@ fun Listado_contenido_series(list: List<Series>) {
     }
 }
 @Composable
-fun Componente_visualPeliculas(peli:Peliculas){
+fun Componente_visualPeliculas(peli: Peliculas){
+    val bitmap=remember{mutableStateOf<ImageBitmap?>(null)}
+    val scope= rememberCoroutineScope()
+    val url=try{
+        URL(peli.imageId)
+    }catch(e: MalformedURLException){null}
+    url?.loadImage(scope,bitmap)
     Card(
         shape = MaterialTheme.shapes.small,
         modifier = Modifier
@@ -937,14 +980,11 @@ fun Componente_visualPeliculas(peli:Peliculas){
     ) {
 
         Column {
-            Image(
-                painter = painterResource(peli.imageId),
-                contentDescription = "Wachlist",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.05F),
-                contentScale = ContentScale.Crop,
-            )
+            bitmap.value?.apply{
+                Image(
+                    bitmap=this, contentDescription = "Wachlist"
+                )
+            }
 
 
             Row(
@@ -1022,4 +1062,12 @@ fun DropDownMenu(opciones: List<String>):String {
         }
     }
     return selectedText
+}
+fun URL.loadImage(scope: CoroutineScope, bitmap:MutableState<ImageBitmap?>){
+    val result : Deferred<ImageBitmap?> = scope.async(Dispatchers.IO){
+        BitmapFactory.decodeStream(openStream()).asImageBitmap()
+    }
+    scope.launch{
+        bitmap.value=result.await()
+    }
 }
